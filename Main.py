@@ -441,7 +441,9 @@ class RecruitmentRankerGUI:
         padding = 24
         chart_width = max(1, width - padding * 2)
         chart_height = max(1, height - padding * 2)
-        max_score = max(score for _, score in ranked) or 1.0
+        max_score = max(score for _, score in ranked)
+        if max_score <= 0:
+            max_score = 1.0
         bar_width = chart_width / max(len(ranked), 1)
 
         canvas.create_line(padding, height - padding, width - padding, height - padding, fill=self.palette["border"])
@@ -489,7 +491,9 @@ class RecruitmentRankerGUI:
         chart_width = max(1, width - padding * 2)
         chart_height = max(1, height - padding * 2)
         scores = [score for _, score in ranked]
-        max_score = max(1.0, max(scores))
+        max_score = max(scores)
+        if max_score <= 0:
+            max_score = 1.0
         count = len(scores)
 
         canvas.create_line(padding, height - padding, width - padding, height - padding, fill=self.palette["border"])
