@@ -20,6 +20,9 @@ class RecruitmentRankerGUI:
     INITIAL_HEIGHT = 760
     MIN_WIDTH = 980
     MIN_HEIGHT = 680
+    CHART_PADDING = 24
+    BAR_SPACING = 4
+    SINGLE_POINT_RATIO = 0.5
 
     def __init__(self, root):
         self.root = root
@@ -243,14 +246,14 @@ class RecruitmentRankerGUI:
             (0, 0), window=scrollable_frame, anchor="nw"
         )
 
-        def _update_scroll_region(event):
+        def update_scroll_region(event):
             self.candidate_canvas.configure(scrollregion=self.candidate_canvas.bbox("all"))
 
-        def _resize_canvas(event):
+        def resize_canvas_width(event):
             self.candidate_canvas.itemconfigure(self._candidate_canvas_window, width=event.width)
 
-        scrollable_frame.bind("<Configure>", _update_scroll_region)
-        self.candidate_canvas.bind("<Configure>", _resize_canvas)
+        scrollable_frame.bind("<Configure>", update_scroll_region)
+        self.candidate_canvas.bind("<Configure>", resize_canvas_width)
 
         for i in range(self.CANDIDATE_SLOTS):
             row_base = i * 3
@@ -438,7 +441,7 @@ class RecruitmentRankerGUI:
             return
         width = canvas.winfo_width() or int(canvas["width"])
         height = canvas.winfo_height() or int(canvas["height"])
-        padding = 24
+        padding = self.CHART_PADDING
         chart_width = max(1, width - padding * 2)
         chart_height = max(1, height - padding * 2)
         max_score = max(score for _, score in ranked)
@@ -465,8 +468,8 @@ class RecruitmentRankerGUI:
         )
 
         for index, (_, score) in enumerate(ranked):
-            x0 = padding + index * bar_width + 4
-            x1 = padding + (index + 1) * bar_width - 4
+            x0 = padding + index * bar_width + self.BAR_SPACING
+            x1 = padding + (index + 1) * bar_width - self.BAR_SPACING
             if x1 <= x0:
                 x1 = x0 + 1
             bar_height = chart_height * (score / max_score)
@@ -487,7 +490,7 @@ class RecruitmentRankerGUI:
             return
         width = canvas.winfo_width() or int(canvas["width"])
         height = canvas.winfo_height() or int(canvas["height"])
-        padding = 24
+        padding = self.CHART_PADDING
         chart_width = max(1, width - padding * 2)
         chart_height = max(1, height - padding * 2)
         scores = [score for _, score in ranked]
@@ -517,7 +520,7 @@ class RecruitmentRankerGUI:
 
         points = []
         for index, score in enumerate(scores):
-            ratio = index / (count - 1) if count > 1 else 0.5
+            ratio = index / (count - 1) if count > 1 else self.SINGLE_POINT_RATIO
             x = padding + ratio * chart_width
             y = height - padding - (score / max_score) * chart_height
             points.append((x, y))
