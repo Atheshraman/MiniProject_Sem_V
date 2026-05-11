@@ -15,7 +15,7 @@ from recruitment_ranker import (
 
 
 class RecruitmentRankerGUI:
-    CANDIDATE_SLOTS = 3
+    CANDIDATE_SLOTS = 100
     INITIAL_WIDTH = 1120
     INITIAL_HEIGHT = 760
     MIN_WIDTH = 980
@@ -47,6 +47,11 @@ class RecruitmentRankerGUI:
         self.job_inputs = {}
         self.candidate_name_entries = []
         self.candidate_text_entries = []
+        self._latest_ranked = []
+        self._candidate_canvas_window = None
+        self.candidate_canvas = None
+        self.score_bar_canvas = None
+        self.score_trend_canvas = None
 
         self._build_style()
         self._build_layout()
@@ -219,20 +224,48 @@ class RecruitmentRankerGUI:
         )
         frame.pack(fill="both", expand=True, pady=(0, 12))
 
+        list_container = ttk.Frame(frame, style="Card.TFrame")
+        list_container.pack(fill="both", expand=True)
+
+        self.candidate_canvas = tk.Canvas(
+            list_container,
+            background=self.palette["card"],
+            highlightthickness=0,
+            borderwidth=0,
+        )
+        scrollbar = ttk.Scrollbar(list_container, orient="vertical", command=self.candidate_canvas.yview)
+        self.candidate_canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        self.candidate_canvas.pack(side="left", fill="both", expand=True)
+
+        scrollable_frame = ttk.Frame(self.candidate_canvas, style="Card.TFrame")
+        self._candidate_canvas_window = self.candidate_canvas.create_window(
+            (0, 0), window=scrollable_frame, anchor="nw"
+        )
+
+        def _update_scroll_region(event):
+            self.candidate_canvas.configure(scrollregion=self.candidate_canvas.bbox("all"))
+
+        def _resize_canvas(event):
+            self.candidate_canvas.itemconfigure(self._candidate_canvas_window, width=event.width)
+
+        scrollable_frame.bind("<Configure>", _update_scroll_region)
+        self.candidate_canvas.bind("<Configure>", _resize_canvas)
+
         for i in range(self.CANDIDATE_SLOTS):
             row_base = i * 3
-            ttk.Label(frame, text=f"Candidate {i + 1} Name", style="Card.TLabel").grid(
+            ttk.Label(scrollable_frame, text=f"Candidate {i + 1} Name", style="Card.TLabel").grid(
                 row=row_base, column=0, sticky="w", padx=8, pady=(8, 2)
             )
-            name_entry = ttk.Entry(frame, style="Modern.TEntry")
+            name_entry = ttk.Entry(scrollable_frame, style="Modern.TEntry")
             name_entry.grid(row=row_base, column=1, sticky="ew", padx=8, pady=(8, 2))
             self.candidate_name_entries.append(name_entry)
 
-            ttk.Label(frame, text=f"Candidate {i + 1} Resume Text", style="Card.TLabel").grid(
+            ttk.Label(scrollable_frame, text=f"Candidate {i + 1} Resume Text", style="Card.TLabel").grid(
                 row=row_base + 1, column=0, sticky="nw", padx=8, pady=(2, 8)
             )
             resume_text = tk.Text(
-                frame,
+                scrollable_frame,
                 height=4,
                 wrap="word",
                 background=self.palette["input_bg"],
@@ -245,7 +278,7 @@ class RecruitmentRankerGUI:
             resume_text.grid(row=row_base + 1, column=1, sticky="ew", padx=8, pady=(2, 8))
             self.candidate_text_entries.append(resume_text)
 
-        frame.columnconfigure(1, weight=1)
+        scrollable_frame.columnconfigure(1, weight=1)
 
         button_row = ttk.Frame(parent, style="App.TFrame")
         button_row.pack(fill="x")
@@ -287,9 +320,12 @@ class RecruitmentRankerGUI:
             style="Muted.TLabel",
         ).pack(anchor="w", pady=(0, 10))
 
+        tree_container = ttk.Frame(frame, style="Card.TFrame")
+        tree_container.pack(fill="both", expand=True)
+
         columns = ("rank", "name", "score")
         self.result_tree = ttk.Treeview(
-            frame,
+            tree_container,
             columns=columns,
             show="headings",
             height=14,
@@ -303,7 +339,37 @@ class RecruitmentRankerGUI:
         self.result_tree.column("score", width=90, anchor="center")
         self.result_tree.tag_configure("odd", background=self.palette["input_bg"])
         self.result_tree.tag_configure("even", background=self.palette["card"])
-        self.result_tree.pack(fill="both", expand=True)
+        result_scrollbar = ttk.Scrollbar(tree_container, orient="vertical", command=self.result_tree.yview)
+        self.result_tree.configure(yscrollcommand=result_scrollbar.set)
+        self.result_tree.pack(side="left", fill="both", expand=True)
+        result_scrollbar.pack(side="right", fill="y")
+
+        charts_frame = ttk.Frame(frame, style="Card.TFrame")
+        charts_frame.pack(fill="x", pady=(12, 0))
+
+        ttk.Label(charts_frame, text="Top Scores (Bar Chart)", style="Card.TLabel").pack(anchor="w")
+        self.score_bar_canvas = tk.Canvas(
+            charts_frame,
+            height=150,
+            background=self.palette["card"],
+            highlightbackground=self.palette["border"],
+            highlightthickness=1,
+        )
+        self.score_bar_canvas.pack(fill="x", pady=(4, 10))
+
+        ttk.Label(charts_frame, text="Score Trend (All Candidates)", style="Card.TLabel").pack(anchor="w")
+        self.score_trend_canvas = tk.Canvas(
+            charts_frame,
+            height=150,
+            background=self.palette["card"],
+            highlightbackground=self.palette["border"],
+            highlightthickness=1,
+        )
+        self.score_trend_canvas.pack(fill="x", pady=(4, 0))
+
+        self.score_bar_canvas.bind("<Configure>", self._refresh_charts)
+        self.score_trend_canvas.bind("<Configure>", self._refresh_charts)
+        self._clear_charts()
 
     def _prefill_defaults(self):
         defaults = {
@@ -333,6 +399,133 @@ class RecruitmentRankerGUI:
         for i, (name, text) in enumerate(seed_data):
             self.candidate_name_entries[i].insert(0, name)
             self.candidate_text_entries[i].insert("1.0", text)
+
+    def _refresh_charts(self, event=None):
+        if self._latest_ranked:
+            self._render_charts(self._latest_ranked)
+        else:
+            self._clear_charts()
+
+    def _clear_charts(self):
+        self._draw_empty_chart(self.score_bar_canvas, "Run ranking to see score bars.")
+        self._draw_empty_chart(self.score_trend_canvas, "Run ranking to see score trend.")
+
+    def _draw_empty_chart(self, canvas, message):
+        if canvas is None:
+            return
+        canvas.delete("all")
+        width = canvas.winfo_width() or int(canvas["width"])
+        height = canvas.winfo_height() or int(canvas["height"])
+        canvas.create_text(
+            width / 2,
+            height / 2,
+            text=message,
+            fill=self.palette["muted"],
+            font=("TkDefaultFont", 9),
+        )
+
+    def _render_charts(self, ranked):
+        if not ranked:
+            self._clear_charts()
+            return
+        top_items = ranked[: min(10, len(ranked))]
+        self._draw_bar_chart(self.score_bar_canvas, top_items)
+        self._draw_line_chart(self.score_trend_canvas, ranked)
+
+    def _draw_bar_chart(self, canvas, ranked):
+        canvas.delete("all")
+        if not ranked:
+            return
+        width = canvas.winfo_width() or int(canvas["width"])
+        height = canvas.winfo_height() or int(canvas["height"])
+        padding = 24
+        chart_width = max(1, width - padding * 2)
+        chart_height = max(1, height - padding * 2)
+        max_score = max(score for _, score in ranked) or 1.0
+        bar_width = chart_width / max(len(ranked), 1)
+
+        canvas.create_line(padding, height - padding, width - padding, height - padding, fill=self.palette["border"])
+        canvas.create_text(
+            padding - 6,
+            padding,
+            text=f"{max_score:.2f}",
+            fill=self.palette["muted"],
+            anchor="e",
+            font=("TkDefaultFont", 8),
+        )
+        canvas.create_text(
+            padding - 6,
+            height - padding,
+            text="0",
+            fill=self.palette["muted"],
+            anchor="e",
+            font=("TkDefaultFont", 8),
+        )
+
+        for index, (_, score) in enumerate(ranked):
+            x0 = padding + index * bar_width + 4
+            x1 = padding + (index + 1) * bar_width - 4
+            if x1 <= x0:
+                x1 = x0 + 1
+            bar_height = chart_height * (score / max_score)
+            y1 = height - padding
+            y0 = y1 - bar_height
+            canvas.create_rectangle(x0, y0, x1, y1, fill=self.palette["accent"], outline="")
+            canvas.create_text(
+                (x0 + x1) / 2,
+                y1 + 10,
+                text=str(index + 1),
+                fill=self.palette["muted"],
+                font=("TkDefaultFont", 8),
+            )
+
+    def _draw_line_chart(self, canvas, ranked):
+        canvas.delete("all")
+        if not ranked:
+            return
+        width = canvas.winfo_width() or int(canvas["width"])
+        height = canvas.winfo_height() or int(canvas["height"])
+        padding = 24
+        chart_width = max(1, width - padding * 2)
+        chart_height = max(1, height - padding * 2)
+        scores = [score for _, score in ranked]
+        max_score = max(1.0, max(scores))
+        count = len(scores)
+
+        canvas.create_line(padding, height - padding, width - padding, height - padding, fill=self.palette["border"])
+        canvas.create_line(padding, padding, padding, height - padding, fill=self.palette["border"])
+        canvas.create_text(
+            padding - 6,
+            padding,
+            text=f"{max_score:.2f}",
+            fill=self.palette["muted"],
+            anchor="e",
+            font=("TkDefaultFont", 8),
+        )
+        canvas.create_text(
+            padding - 6,
+            height - padding,
+            text="0",
+            fill=self.palette["muted"],
+            anchor="e",
+            font=("TkDefaultFont", 8),
+        )
+
+        points = []
+        for index, score in enumerate(scores):
+            ratio = index / (count - 1) if count > 1 else 0.5
+            x = padding + ratio * chart_width
+            y = height - padding - (score / max_score) * chart_height
+            points.append((x, y))
+
+        if len(points) > 1:
+            canvas.create_line(
+                [coord for point in points for coord in point],
+                fill=self.palette["accent"],
+                width=2,
+            )
+        for x, y in points:
+            canvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill=self.palette["accent"], outline="")
 
     def _parse_job_requirements(self):
         job_req = {}
@@ -379,6 +572,8 @@ class RecruitmentRankerGUI:
             self.top_candidate_var.set(f"Top Candidate: {best_name} ({best_score:.3f})")
         else:
             self.top_candidate_var.set("Top Candidate: —")
+        self._latest_ranked = ranked
+        self._render_charts(ranked)
 
     def reset_fields(self):
         for entry in self.job_inputs.values():
@@ -390,6 +585,10 @@ class RecruitmentRankerGUI:
         for item in self.result_tree.get_children():
             self.result_tree.delete(item)
         self.top_candidate_var.set("Top Candidate: —")
+        self._latest_ranked = []
+        self._clear_charts()
+        if self.candidate_canvas is not None:
+            self.candidate_canvas.yview_moveto(0)
         self._prefill_defaults()
 
 
