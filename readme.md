@@ -12,10 +12,10 @@ A lightweight AI-inspired recruitment ranking project that scores resumes agains
 
 ## Project Structure
 
-- `/home/runner/work/MiniProject_Sem_V/MiniProject_Sem_V/Main.py` — GUI application entrypoint
-- `/home/runner/work/MiniProject_Sem_V/MiniProject_Sem_V/recruitment_ranker.py` — ranking, feature extraction, and learning logic
-- `/home/runner/work/MiniProject_Sem_V/MiniProject_Sem_V/weights.json` — current scoring weights
-- `/home/runner/work/MiniProject_Sem_V/MiniProject_Sem_V/learner_weights.json` — learner-generated weights
+- `Main.py` — GUI application entrypoint
+- `recruitment_ranker.py` — ranking, feature extraction, and learning logic
+- `weights.json` — current scoring weights
+- `learner_weights.json` — learner-generated weights
 
 ## Requirements
 

@@ -15,6 +15,8 @@ from recruitment_ranker import (
 
 
 class RecruitmentRankerGUI:
+    CANDIDATE_SLOTS = 3
+
     def __init__(self, root):
         self.root = root
         self.root.title("Smart Recruitment Ranker")
@@ -86,7 +88,7 @@ class RecruitmentRankerGUI:
         frame = ttk.LabelFrame(parent, text="Candidate Resumes", style="Section.TLabelframe")
         frame.pack(fill="both", expand=True, padx=2, pady=(0, 10))
 
-        for i in range(3):
+        for i in range(self.CANDIDATE_SLOTS):
             row_base = i * 3
             ttk.Label(frame, text=f"Candidate {i + 1} Name").grid(
                 row=row_base, column=0, sticky="w", padx=8, pady=(8, 2)
@@ -178,7 +180,7 @@ class RecruitmentRankerGUI:
 
     def _collect_resumes(self):
         resumes = []
-        for i in range(3):
+        for i in range(self.CANDIDATE_SLOTS):
             name = self.candidate_name_entries[i].get().strip() or f"Candidate {i + 1}"
             text = self.candidate_text_entries[i].get("1.0", "end").strip()
             if text:
