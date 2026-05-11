@@ -22,7 +22,7 @@ class RecruitmentRankerGUI:
     MIN_HEIGHT = 680
     CHART_PADDING = 24
     BAR_SPACING = 4
-    SINGLE_POINT_RATIO = 0.5
+    SINGLE_POINT_CENTER_RATIO = 0.5
 
     def __init__(self, root):
         self.root = root
@@ -520,7 +520,7 @@ class RecruitmentRankerGUI:
 
         points = []
         for index, score in enumerate(scores):
-            ratio = index / (count - 1) if count > 1 else self.SINGLE_POINT_RATIO
+            ratio = index / (count - 1) if count > 1 else self.SINGLE_POINT_CENTER_RATIO
             x = padding + ratio * chart_width
             y = height - padding - (score / max_score) * chart_height
             points.append((x, y))
