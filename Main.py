@@ -16,12 +16,16 @@ from recruitment_ranker import (
 
 class RecruitmentRankerGUI:
     CANDIDATE_SLOTS = 3
+    INITIAL_WIDTH = 1120
+    INITIAL_HEIGHT = 760
+    MIN_WIDTH = 980
+    MIN_HEIGHT = 680
 
     def __init__(self, root):
         self.root = root
         self.root.title("Smart Recruitment Ranker")
-        self.root.geometry("1120x760")
-        self.root.minsize(980, 680)
+        self.root.geometry(f"{self.INITIAL_WIDTH}x{self.INITIAL_HEIGHT}")
+        self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT)
 
         self.palette = {
             "bg": "#f4f6fb",
@@ -30,7 +34,9 @@ class RecruitmentRankerGUI:
             "muted": "#475569",
             "accent": "#2563eb",
             "accent_dark": "#1d4ed8",
+            "accent_text": "#1e40af",
             "border": "#e2e8f0",
+            "soft_border": "#cbd5f5",
             "input_bg": "#f8fafc",
             "highlight": "#dbeafe",
             "success": "#0b5ed7",
@@ -96,7 +102,7 @@ class RecruitmentRankerGUI:
         style.map(
             "Primary.TButton",
             background=[("active", palette["accent_dark"]), ("!disabled", palette["accent"])],
-            foreground=[("disabled", "#cbd5f5"), ("!disabled", "white")],
+            foreground=[("disabled", palette["soft_border"]), ("!disabled", "white")],
         )
         style.configure(
             "Secondary.TButton",
@@ -108,7 +114,7 @@ class RecruitmentRankerGUI:
         )
         style.map(
             "Secondary.TButton",
-            background=[("active", "#cbd5f5"), ("!disabled", palette["border"])],
+            background=[("active", palette["soft_border"]), ("!disabled", palette["border"])],
         )
         style.configure(
             "Modern.TEntry",
@@ -139,7 +145,7 @@ class RecruitmentRankerGUI:
         style.map(
             "Modern.Treeview",
             background=[("selected", palette["highlight"])],
-            foreground=[("selected", "#1e40af")],
+            foreground=[("selected", palette["accent_text"])],
         )
 
     def _build_layout(self):
@@ -295,8 +301,8 @@ class RecruitmentRankerGUI:
         self.result_tree.column("rank", width=60, anchor="center")
         self.result_tree.column("name", width=170, anchor="w")
         self.result_tree.column("score", width=90, anchor="center")
-        self.result_tree.tag_configure("odd", background="#f8fafc")
-        self.result_tree.tag_configure("even", background="#ffffff")
+        self.result_tree.tag_configure("odd", background=self.palette["input_bg"])
+        self.result_tree.tag_configure("even", background=self.palette["card"])
         self.result_tree.pack(fill="both", expand=True)
 
     def _prefill_defaults(self):
