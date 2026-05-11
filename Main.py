@@ -35,10 +35,10 @@ class RecruitmentRankerGUI:
     def _build_style(self):
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Header.TLabel", font=("Segoe UI", 20, "bold"))
-        style.configure("Section.TLabelframe.Label", font=("Segoe UI", 11, "bold"))
-        style.configure("Primary.TButton", font=("Segoe UI", 10, "bold"), padding=8)
-        style.configure("Results.TLabel", font=("Segoe UI", 10))
+        style.configure("Header.TLabel", font=("TkDefaultFont", 20, "bold"))
+        style.configure("Section.TLabelframe.Label", font=("TkDefaultFont", 11, "bold"))
+        style.configure("Primary.TButton", font=("TkDefaultFont", 10, "bold"), padding=8)
+        style.configure("Results.TLabel", font=("TkDefaultFont", 10))
 
     def _build_layout(self):
         container = ttk.Frame(self.root, padding=16)
@@ -121,7 +121,7 @@ class RecruitmentRankerGUI:
         top_candidate = ttk.Label(
             frame,
             textvariable=self.top_candidate_var,
-            font=("Segoe UI", 12, "bold"),
+            font=("TkDefaultFont", 12, "bold"),
             foreground="#0b5ed7",
         )
         top_candidate.pack(anchor="w", padx=10, pady=(12, 8))
