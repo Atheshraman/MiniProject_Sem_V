@@ -204,8 +204,11 @@ class RecruitmentRankerGUI:
         for i, (name, score) in enumerate(ranked, start=1):
             self.result_tree.insert("", "end", values=(i, name, f"{score:.3f}"))
 
-        best_name, best_score = ranked[0]
-        self.top_candidate_var.set(f"Top Candidate: {best_name} ({best_score:.3f})")
+        if ranked:
+            best_name, best_score = ranked[0]
+            self.top_candidate_var.set(f"Top Candidate: {best_name} ({best_score:.3f})")
+        else:
+            self.top_candidate_var.set("Top Candidate: —")
 
     def reset_fields(self):
         for entry in self.job_inputs.values():
