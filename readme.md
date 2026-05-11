@@ -5,6 +5,7 @@ A lightweight AI-inspired recruitment ranking project that scores resumes agains
 ## Features
 
 - Professional desktop GUI built with Tkinter
+- Modernized UI styling with cleaner panels and typography
 - Job requirement input for key hiring criteria
 - Candidate resume text entry and instant ranking
 - Top-candidate highlight with sorted scoring table
@@ -41,6 +42,10 @@ python Main.py
 2. Add candidate names and resume text.
 3. Click **Rank Candidates** to score and sort applicants.
 4. Review the ranked table and top candidate.
+
+## Example Output
+
+See [`examples/example_run.md`](examples/example_run.md) for a neat end-to-end example of inputs and ranked results.
 
 ## Notes
 

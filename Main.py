@@ -20,8 +20,22 @@ class RecruitmentRankerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Smart Recruitment Ranker")
-        self.root.geometry("1000x700")
-        self.root.minsize(900, 620)
+        self.root.geometry("1120x760")
+        self.root.minsize(980, 680)
+
+        self.palette = {
+            "bg": "#f4f6fb",
+            "card": "#ffffff",
+            "text": "#0f172a",
+            "muted": "#475569",
+            "accent": "#2563eb",
+            "accent_dark": "#1d4ed8",
+            "border": "#e2e8f0",
+            "input_bg": "#f8fafc",
+            "highlight": "#dbeafe",
+            "success": "#0b5ed7",
+        }
+        self.root.configure(background=self.palette["bg"])
 
         self.weights = load_weights()
         self.job_inputs = {}
@@ -35,32 +49,125 @@ class RecruitmentRankerGUI:
     def _build_style(self):
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Header.TLabel", font=("TkDefaultFont", 20, "bold"))
-        style.configure("Section.TLabelframe.Label", font=("TkDefaultFont", 11, "bold"))
-        style.configure("Primary.TButton", font=("TkDefaultFont", 10, "bold"), padding=8)
-        style.configure("Results.TLabel", font=("TkDefaultFont", 10))
+        palette = self.palette
+
+        style.configure("TFrame", background=palette["bg"])
+        style.configure("App.TFrame", background=palette["bg"])
+        style.configure("Card.TFrame", background=palette["card"])
+        style.configure("Card.TLabelframe", background=palette["card"], relief="solid", borderwidth=1)
+        style.configure(
+            "Card.TLabelframe.Label",
+            background=palette["card"],
+            foreground=palette["text"],
+            font=("TkDefaultFont", 11, "bold"),
+        )
+        style.configure(
+            "Header.TLabel",
+            background=palette["bg"],
+            foreground=palette["text"],
+            font=("TkDefaultFont", 22, "bold"),
+        )
+        style.configure(
+            "Subheader.TLabel",
+            background=palette["bg"],
+            foreground=palette["muted"],
+            font=("TkDefaultFont", 11),
+        )
+        style.configure(
+            "Card.TLabel",
+            background=palette["card"],
+            foreground=palette["text"],
+            font=("TkDefaultFont", 10),
+        )
+        style.configure(
+            "Muted.TLabel",
+            background=palette["card"],
+            foreground=palette["muted"],
+            font=("TkDefaultFont", 9),
+        )
+        style.configure(
+            "Primary.TButton",
+            font=("TkDefaultFont", 10, "bold"),
+            padding=(18, 10),
+            background=palette["accent"],
+            foreground="white",
+            borderwidth=0,
+        )
+        style.map(
+            "Primary.TButton",
+            background=[("active", palette["accent_dark"]), ("!disabled", palette["accent"])],
+            foreground=[("disabled", "#cbd5f5"), ("!disabled", "white")],
+        )
+        style.configure(
+            "Secondary.TButton",
+            font=("TkDefaultFont", 10),
+            padding=(16, 10),
+            background=palette["border"],
+            foreground=palette["text"],
+            borderwidth=0,
+        )
+        style.map(
+            "Secondary.TButton",
+            background=[("active", "#cbd5f5"), ("!disabled", palette["border"])],
+        )
+        style.configure(
+            "Modern.TEntry",
+            fieldbackground=palette["input_bg"],
+            background=palette["input_bg"],
+            foreground=palette["text"],
+            relief="flat",
+        )
+        style.map(
+            "Modern.TEntry",
+            fieldbackground=[("focus", palette["card"]), ("!disabled", palette["input_bg"])],
+        )
+        style.configure(
+            "Modern.Treeview",
+            background=palette["card"],
+            fieldbackground=palette["card"],
+            foreground=palette["text"],
+            rowheight=28,
+            borderwidth=0,
+        )
+        style.configure(
+            "Modern.Treeview.Heading",
+            background=palette["border"],
+            foreground=palette["text"],
+            font=("TkDefaultFont", 10, "bold"),
+            relief="flat",
+        )
+        style.map(
+            "Modern.Treeview",
+            background=[("selected", palette["highlight"])],
+            foreground=[("selected", "#1e40af")],
+        )
 
     def _build_layout(self):
-        container = ttk.Frame(self.root, padding=16)
+        container = ttk.Frame(self.root, padding=20, style="App.TFrame")
         container.pack(fill="both", expand=True)
 
-        title = ttk.Label(container, text="Smart Recruitment Ranker", style="Header.TLabel")
-        title.pack(anchor="w", pady=(0, 8))
+        header = ttk.Frame(container, style="App.TFrame")
+        header.pack(fill="x")
+        title = ttk.Label(header, text="Smart Recruitment Ranker", style="Header.TLabel")
+        title.pack(anchor="w")
         subtitle = ttk.Label(
-            container,
+            header,
             text="Set job requirements, enter resumes, and rank candidates instantly.",
+            style="Subheader.TLabel",
         )
-        subtitle.pack(anchor="w", pady=(0, 14))
+        subtitle.pack(anchor="w", pady=(4, 16))
 
-        body = ttk.Frame(container)
+        ttk.Separator(container).pack(fill="x", pady=(0, 16))
+
+        body = ttk.Frame(container, style="App.TFrame")
         body.pack(fill="both", expand=True)
         body.columnconfigure(0, weight=3)
         body.columnconfigure(1, weight=2)
         body.rowconfigure(0, weight=1)
 
-        left_panel = ttk.Frame(body)
+        left_panel = ttk.Frame(body, style="App.TFrame")
         left_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
-        right_panel = ttk.Frame(body)
+        right_panel = ttk.Frame(body, style="App.TFrame")
         right_panel.grid(row=0, column=1, sticky="nsew")
 
         self._build_job_requirements(left_panel)
@@ -68,8 +175,19 @@ class RecruitmentRankerGUI:
         self._build_results(right_panel)
 
     def _build_job_requirements(self, parent):
-        frame = ttk.LabelFrame(parent, text="Job Requirements (0.0 to 1.0)", style="Section.TLabelframe")
-        frame.pack(fill="x", padx=2, pady=(0, 10))
+        frame = ttk.LabelFrame(
+            parent,
+            text="Job Requirements",
+            style="Card.TLabelframe",
+            padding=(14, 12),
+        )
+        frame.pack(fill="x", pady=(0, 12))
+
+        ttk.Label(
+            frame,
+            text="Enter target levels from 0.0 (low) to 1.0 (high).",
+            style="Muted.TLabel",
+        ).grid(row=0, column=0, columnspan=2, sticky="w", padx=4, pady=(0, 10))
 
         key_features = [
             "Python",
@@ -78,43 +196,73 @@ class RecruitmentRankerGUI:
             "SQL",
             "Years of Experience",
         ]
-        for index, feature in enumerate(key_features):
-            ttk.Label(frame, text=feature).grid(row=index, column=0, sticky="w", padx=8, pady=6)
-            entry = ttk.Entry(frame, width=12)
-            entry.grid(row=index, column=1, sticky="w", padx=8, pady=6)
+        for index, feature in enumerate(key_features, start=1):
+            ttk.Label(frame, text=feature, style="Card.TLabel").grid(
+                row=index, column=0, sticky="w", padx=6, pady=6
+            )
+            entry = ttk.Entry(frame, width=12, style="Modern.TEntry")
+            entry.grid(row=index, column=1, sticky="w", padx=6, pady=6)
             self.job_inputs[feature] = entry
 
     def _build_candidate_inputs(self, parent):
-        frame = ttk.LabelFrame(parent, text="Candidate Resumes", style="Section.TLabelframe")
-        frame.pack(fill="both", expand=True, padx=2, pady=(0, 10))
+        frame = ttk.LabelFrame(
+            parent,
+            text="Candidate Resumes",
+            style="Card.TLabelframe",
+            padding=(14, 12),
+        )
+        frame.pack(fill="both", expand=True, pady=(0, 12))
 
         for i in range(self.CANDIDATE_SLOTS):
             row_base = i * 3
-            ttk.Label(frame, text=f"Candidate {i + 1} Name").grid(
+            ttk.Label(frame, text=f"Candidate {i + 1} Name", style="Card.TLabel").grid(
                 row=row_base, column=0, sticky="w", padx=8, pady=(8, 2)
             )
-            name_entry = ttk.Entry(frame)
+            name_entry = ttk.Entry(frame, style="Modern.TEntry")
             name_entry.grid(row=row_base, column=1, sticky="ew", padx=8, pady=(8, 2))
             self.candidate_name_entries.append(name_entry)
 
-            ttk.Label(frame, text=f"Candidate {i + 1} Resume Text").grid(
+            ttk.Label(frame, text=f"Candidate {i + 1} Resume Text", style="Card.TLabel").grid(
                 row=row_base + 1, column=0, sticky="nw", padx=8, pady=(2, 8)
             )
-            resume_text = tk.Text(frame, height=4, wrap="word")
+            resume_text = tk.Text(
+                frame,
+                height=4,
+                wrap="word",
+                background=self.palette["input_bg"],
+                foreground=self.palette["text"],
+                highlightbackground=self.palette["border"],
+                highlightcolor=self.palette["accent"],
+                highlightthickness=1,
+                relief="flat",
+            )
             resume_text.grid(row=row_base + 1, column=1, sticky="ew", padx=8, pady=(2, 8))
             self.candidate_text_entries.append(resume_text)
 
         frame.columnconfigure(1, weight=1)
 
-        button_row = ttk.Frame(parent)
+        button_row = ttk.Frame(parent, style="App.TFrame")
         button_row.pack(fill="x")
-        ttk.Button(button_row, text="Rank Candidates", style="Primary.TButton", command=self.rank).pack(
-            side="left", padx=(2, 8)
-        )
-        ttk.Button(button_row, text="Reset", command=self.reset_fields).pack(side="left")
+        ttk.Button(
+            button_row,
+            text="Rank Candidates",
+            style="Primary.TButton",
+            command=self.rank,
+        ).pack(side="left", padx=(0, 10))
+        ttk.Button(
+            button_row,
+            text="Reset",
+            style="Secondary.TButton",
+            command=self.reset_fields,
+        ).pack(side="left")
 
     def _build_results(self, parent):
-        frame = ttk.LabelFrame(parent, text="Ranking Results", style="Section.TLabelframe")
+        frame = ttk.LabelFrame(
+            parent,
+            text="Ranking Results",
+            style="Card.TLabelframe",
+            padding=(14, 12),
+        )
         frame.pack(fill="both", expand=True)
 
         self.top_candidate_var = tk.StringVar(value="Top Candidate: —")
@@ -122,19 +270,34 @@ class RecruitmentRankerGUI:
             frame,
             textvariable=self.top_candidate_var,
             font=("TkDefaultFont", 12, "bold"),
-            foreground="#0b5ed7",
+            foreground=self.palette["success"],
+            background=self.palette["card"],
         )
-        top_candidate.pack(anchor="w", padx=10, pady=(12, 8))
+        top_candidate.pack(anchor="w", pady=(4, 6))
+
+        ttk.Label(
+            frame,
+            text="Scores are normalized between 0 and 1. Higher is better.",
+            style="Muted.TLabel",
+        ).pack(anchor="w", pady=(0, 10))
 
         columns = ("rank", "name", "score")
-        self.result_tree = ttk.Treeview(frame, columns=columns, show="headings", height=14)
+        self.result_tree = ttk.Treeview(
+            frame,
+            columns=columns,
+            show="headings",
+            height=14,
+            style="Modern.Treeview",
+        )
         self.result_tree.heading("rank", text="Rank")
         self.result_tree.heading("name", text="Candidate")
         self.result_tree.heading("score", text="Score")
         self.result_tree.column("rank", width=60, anchor="center")
         self.result_tree.column("name", width=170, anchor="w")
         self.result_tree.column("score", width=90, anchor="center")
-        self.result_tree.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        self.result_tree.tag_configure("odd", background="#f8fafc")
+        self.result_tree.tag_configure("even", background="#ffffff")
+        self.result_tree.pack(fill="both", expand=True)
 
     def _prefill_defaults(self):
         defaults = {
@@ -202,7 +365,8 @@ class RecruitmentRankerGUI:
             self.result_tree.delete(item)
 
         for i, (name, score) in enumerate(ranked, start=1):
-            self.result_tree.insert("", "end", values=(i, name, f"{score:.3f}"))
+            tag = "even" if i % 2 == 0 else "odd"
+            self.result_tree.insert("", "end", values=(i, name, f"{score:.3f}"), tags=(tag,))
 
         if ranked:
             best_name, best_score = ranked[0]
