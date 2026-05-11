@@ -1,5 +1,10 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+try:
+    import tkinter as tk
+    from tkinter import ttk, messagebox
+except ModuleNotFoundError:  # pragma: no cover - depends on system Tk installation
+    tk = None
+    ttk = None
+    messagebox = None
 
 from recruitment_ranker import (
     DEFAULT_FEATURES,
@@ -10,7 +15,7 @@ from recruitment_ranker import (
 
 
 class RecruitmentRankerGUI:
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root):
         self.root = root
         self.root.title("Smart Recruitment Ranker")
         self.root.geometry("1000x700")
@@ -214,6 +219,11 @@ class RecruitmentRankerGUI:
 
 
 if __name__ == "__main__":
+    if tk is None:
+        raise RuntimeError(
+            "Tkinter is not available in this Python environment. "
+            "Please install Python with Tk support to run the GUI."
+        )
     root = tk.Tk()
     app = RecruitmentRankerGUI(root)
     root.mainloop()

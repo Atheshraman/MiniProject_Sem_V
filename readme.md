@@ -21,6 +21,7 @@ A lightweight AI-inspired recruitment ranking project that scores resumes agains
 
 - Python 3.10+
 - `numpy`
+- Tkinter support in Python (usually included in standard Python desktop installs)
 
 Install dependencies:
 
