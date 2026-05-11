@@ -7,8 +7,9 @@ A lightweight AI-inspired recruitment ranking project that scores resumes agains
 - Professional desktop GUI built with Tkinter
 - Modernized UI styling with cleaner panels and typography
 - Job requirement input for key hiring criteria
-- Candidate resume text entry and instant ranking
+- Scrollable 100-candidate resume entry with instant ranking
 - Top-candidate highlight with sorted scoring table
+- Score visualizations with bar and trend charts
 - Reusable ranking logic in `recruitment_ranker.py`
 
 ## Project Structure
